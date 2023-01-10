@@ -1,0 +1,52 @@
+## data label 13 dang bi loi
+import numpy as np
+import pandas as pd
+import math
+import pandas as pd
+import io
+
+from scipy.stats import norm
+from scipy.stats.kde import sqrt
+
+data   = pd.read_csv('datatestP.csv')
+
+data = np.array(data)
+
+num_of_cases, num_of_feature = data.shape
+
+data_in = data[0:num_of_cases].T
+Y_data = data_in[0]  # Labels
+Y_data = Y_data.astype(int)
+
+X_data = np.array(data_in[1:num_of_feature])                 #data nhung bo thong so Label
+X_data_RSSI  = X_data[1::2,:]                                #data nhung bo ID RSSI
+X_data_RSSI_Label = np.array_split(X_data_RSSI, 81, axis = 1)#tao mang 3 chieu, chia data ra thanh 80 mang con
+
+X_mean_n_SD = np.zeros((81,10,2))                            #tao array 3 chieu 80 layer, moi layer 10 hang va 2 cot
+for i in range (0,81):
+  for j in range (0,10):
+    X_mean_n_SD[i][j][0] = np.mean(X_data_RSSI_Label[i][j])
+    X_mean_n_SD[i][j][1] = np.std(X_data_RSSI_Label[i][j])
+
+    ##current_location = []
+##for i in range(10):
+##   current_location.append(float(input(i+1)))
+##print(current_location)
+
+def normal_distribution(x , mean , sd):
+    p = 1 / math.sqrt(2 * math.pi * sd**2)
+    return p * np.exp((-0.5 * 1 / sd**2) * ((x - mean)**2)) 
+
+current_location_1 = [-60,-63,-73,-70,-75,-70,-76,-67,-68,-69]
+
+Prob = np.zeros((81,10,1))
+for i in range (0,81):
+  for j in range (0,10):
+    Prob[i][j][0] = normal_distribution(current_location_1[j], X_mean_n_SD[i][j][0], X_mean_n_SD[i][j][1])
+
+Prob_pro = np.zeros((81,1,1))
+
+for i in range (0,81):
+    Prob_pro[i] = np.prod(Prob[i])
+
+print(np.argmax(Prob_pro))
